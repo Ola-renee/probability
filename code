@@ -1,0 +1,46 @@
+# Define the probabilities
+burglary_prob = {"+b": 0.001, "-b": 0.999}
+earthquake_prob = {"+e": 0.002, "-e": 0.998}
+john_calls_prob = {("+a", "+j"): 0.9, ("+a", "-j"): 0.1, ("-a", "+j"): 0.05, ("-a", "-j"): 0.95}
+mary_calls_prob = {("+a", "+m"): 0.7, ("+a", "-m"): 0.3, ("-a", "+m"): 0.01, ("-a", "-m"): 0.99}
+alarm_prob = {
+    ("+b", "+e", "+a"): 0.95, ("+b", "+e", "-a"): 0.05,
+    ("+b", "-e", "+a"): 0.94, ("+b", "-e", "-a"): 0.06,
+    ("-b", "+e", "+a"): 0.29, ("-b", "+e", "-a"): 0.71,
+    ("-b", "-e", "+a"): 0.001, ("-b", "-e", "-a"): 0.999
+}
+
+
+
+# Calculate joint probabilities
+joint_prob = {}
+for b in ["+b", "-b"]:
+    for e in ["+e", "-e"]:
+        for a in ["+a", "-a"]:
+            for j in ["+j"]:  # Assuming John always calls
+                joint_prob[(b, e, a, j)] = (
+                    burglary_prob[b] * earthquake_prob[e] * alarm_prob[(b, e, a)] * john_calls_prob[(a, j)]
+                )
+                
+                
+# Sum out the Earthquake variable
+summed_out_e = {}
+for b in ["+b", "-b"]:
+    prob_sum = sum(
+        summed_out_a[(b, e)] for e in ["+e", "-e"]
+    )
+    summed_out_e[b] = prob_sum
+    
+# Multiply with the probability of John calling given Alarm is on
+final_prob = {}
+for b in ["+b", "-b"]:
+    for e in ["+e", "-e"]:
+        final_prob[(b, e)] = summed_out_a[(b, e)] * john_calls_prob[("+a", "+j")]
+
+# Normalize the result to get P(B|J=+j)
+total_prob = sum(summed_out_e.values())
+normalized_prob = {b: p / total_prob for b, p in summed_out_e.items()}
+
+# Print the normalized probability distribution for P(B|J=+j)
+for b, p in normalized_prob.items():
+    print(f"P(B={b}|J=+j) = {p:.6f}")
